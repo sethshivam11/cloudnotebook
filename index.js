@@ -14,6 +14,11 @@ const __dirname1 = path.resolve();
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/notes", require("./routes/notes"));
 
+
+app.listen(port, () => {
+  console.log("Cloud Notebook Backend is running at port: " + port);
+});
+
 // --------------------------Deployment-------------------------
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname1, "/build")));
@@ -25,8 +30,3 @@ if (process.env.NODE_ENV === "production") {
     res.send("Api is running successfully");
   });
 }
-
-
-app.listen(port, () => {
-  console.log("Cloud Notebook Backend is running at port: " + port);
-});
