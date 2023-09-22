@@ -1,5 +1,5 @@
 {
-  "name": "cloudnotebook-backend",
+  "name": "cloudnotebook",
   "version": "1.0.0",
   "description": "your notebook on the web",
   "main": "index.js",
