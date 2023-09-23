@@ -120,4 +120,17 @@ router.post("/getuser", fetchuser, async (req, res) => {
   }
 });
 
+// Route 4: Get Loggedin User credentials using POST "/api/auth/credentials". login required
+router.get("/credentials", fetchuser, async (req, res) => {
+  try{
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password");
+    res.json(user);
+  }
+  catch(err){
+    console.log(err);
+    res.json({ success, error: "Internal Server Error "});
+  }
+})
+
 module.exports = router;
