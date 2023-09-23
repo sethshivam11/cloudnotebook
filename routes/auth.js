@@ -30,12 +30,10 @@ router.post(
       // Check if the user with this email already exists
       let user = await User.findOne({ email: req.body.email });
       if (user) {
-        return res
-          .status(400)
-          .json({
-            success,
-            error: "Sorry a user with this email already exists.",
-          });
+        return res.status(400).json({
+          success,
+          error: "Sorry a user with this email already exists.",
+        });
       }
       const salt = await bcrypt.genSalt(10);
       secPass = await bcrypt.hash(req.body.password, salt);
@@ -87,12 +85,10 @@ router.post(
       }
       const passwordCompare = await bcrypt.compare(password, user.password);
       if (!passwordCompare) {
-        return res
-          .status(400)
-          .json({
-            success,
-            error: "Please try to login with correct credentials.",
-          });
+        return res.status(400).json({
+          success,
+          error: "Please try to login with correct credentials.",
+        });
       }
       const data = {
         user: {
@@ -120,17 +116,51 @@ router.post("/getuser", fetchuser, async (req, res) => {
   }
 });
 
-// Route 4: Get Loggedin User credentials using POST "/api/auth/credentials". login required
+// Route 4: Get Loggedin User credentials using GET "/api/auth/credentials". login required
 router.get("/credentials", fetchuser, async (req, res) => {
-  try{
+  try {
+    let success = false;
     const userId = req.user.id;
     const user = await User.findById(userId).select("-password");
-    res.json(user);
-  }
-  catch(err){
+    user.password = "";
+    success = true;
+    res.json({success, user});
+  } catch (err) {
     console.log(err);
-    res.json({ success, error: "Internal Server Error "});
+    success = false;
+    res.json({ success, error: "Internal Server Error " });
   }
-})
+});
+
+// Route 5: Update User Credentials using post "/api/auth/credentials". login required
+router.post(
+  "/credentials",
+  [
+    body("name", "Enter a valid name").isLength({ min: 2 }),
+    body("email", "Enter a valid email").isEmail(),
+    body(
+      "password",
+      "Enter a valid password with at least 6 characters"
+    ).isLength({ min: 6 }),
+  ],
+  fetchuser,
+  async (req, res) => {
+    try {
+      let success = false;
+      const userId = req.user.id;
+      const credentials = req.body;
+      const salt = await bcrypt.genSalt(10);
+      secPass = await bcrypt.hash(credentials.password, salt);
+      credentials.password = secPass;
+      const user = await User.findByIdAndUpdate(userId, {$set: credentials}, {new: true});
+      success = true;
+      res.json({success, user});
+    } catch (err) {
+      console.log(err);
+      success = false;
+      res.json({ success, error: err });
+    }
+  }
+);
 
 module.exports = router;

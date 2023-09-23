@@ -4,7 +4,6 @@ const fetchuser = require("../middleware/fetchuser");
 const { body, validationResult } = require("express-validator");
 const Note = require("../models/Note");
 const crypto = require("crypto");
-const password = "200encrYptionSucCeSs200";
 const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
 const algorithm = "aes-256-cbc";
@@ -78,12 +77,9 @@ router.post(
         description: encryptedDescription,
       });
       const savedNote = await note.save();
-      decryptTitle = decrypt(savedNote.title);
-      decryptDescription = decrypt(savedNote.description);
-      decryptTag = decrypt(savedNote.tag);
-      savedNote.title = decryptTitle;
-      savedNote.description = decryptDescription;
-      savedNote.tag = decryptTag;
+      savedNote.title = decrypt(savedNote.title);
+      savedNote.description = decrypt(savedNote.description);
+      savedNote.tag = decrypt(savedNote.tag);
       res.json(savedNote);
     } catch (err) {
       console.log(err);
@@ -147,6 +143,7 @@ router.put("/updatenote/:id", fetchuser, async (req, res) => {
 router.delete("/deletenote/:id", fetchuser, async (req, res) => {
   try {
     // Find the note to be deleted and delete it
+    let success = false;
     let note = await Note.findById(req.params.id);
     if (!note) {
       res.status(404).send("Not Found.");
@@ -157,11 +154,19 @@ router.delete("/deletenote/:id", fetchuser, async (req, res) => {
       return res.status(401).send({ Error: "Not Allowed." });
     }
     note = await Note.findByIdAndDelete(req.params.id);
-    res.json({ Success: "Note has been deleted", note: note });
+    success = true;
+    res.json({ success , note: note });
   } catch (err) {
+    success = false;
     console.log(err);
     res.status(500).send("Internal server error.");
   }
 });
+
+
+router.get("/test", async (req, res) => {
+  let text = encrypt("Hello this is me shivam");
+  res.json({text, key});
+})
 
 module.exports = router;
