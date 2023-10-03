@@ -3,48 +3,18 @@ const router = express.Router();
 const fetchuser = require("../middleware/fetchuser");
 const { body, validationResult } = require("express-validator");
 const Note = require("../models/Note");
-const crypto = require("crypto");
-const key = crypto.randomBytes(32);
-const iv = crypto.randomBytes(16);
-const algorithm = "aes-256-cbc";
 
-//Encrypting text
-function encrypt(text) {
-  let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
-  let encrypted = cipher.update(text);
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return { iv: iv.toString("hex"), data: encrypted.toString("hex") };
-}
-
-// Decrypting text
-function decrypt(text) {
-  let iv = Buffer.from(text.iv, "hex");
-  let encryptedText = Buffer.from(text.data, "hex");
-  let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString();
-}
-
-// Testing the encryption
-// let hw = "Shivam";
-// hw = encrypt(hw);
-// console.log(hw);
-// console.log(decrypt(hw));
 
 // Route 1: Get all the notes using GET "/api/notes/fetchallnotes". Login Required
 router.get("/fetchallnotes", fetchuser, async (req, res) => {
+  let success = false;
   try {
     const notes = await Note.find({ user: req.user.id });
-    notes.forEach((note) => {
-      note.title = decrypt(note.title);
-      note.description = decrypt(note.description);
-      note.tag = decrypt(note.tag);
-    });
-    res.json(notes);
+    success = true;
+    res.json({success, notes});
   } catch (err) {
     console.log(err);
-    res.status(500).send("Internal server error.");
+    res.status(500).json({success, error: `Internal server error\n ${err}`});
   }
 });
 
@@ -59,83 +29,63 @@ router.post(
     }),
   ],
   async (req, res) => {
+  let success = false;
     try {
-      const titleR = req.body.title;
-      const dscR = req.body.description;
-      const tagR = req.body.tag;
+      const { tag, title, description } = req.body;
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({ success, errors: errors.array() });
       }
-      let encryptedTitle = encrypt(titleR);
-      let encryptedDescription = encrypt(dscR);
-      let encryptedTag = encrypt(tagR);
       const note = new Note({
         user: req.user.id,
-        tag: encryptedTag,
-        title: encryptedTitle,
-        description: encryptedDescription,
+        tag: tag,
+        title: title,
+        description: description,
       });
       const savedNote = await note.save();
-      savedNote.title = decrypt(savedNote.title);
-      savedNote.description = decrypt(savedNote.description);
-      savedNote.tag = decrypt(savedNote.tag);
-      res.json(savedNote);
+      success = true;
+      res.json({success, savedNote});
     } catch (err) {
       console.log(err);
-      res.status(500).send("Internal server error.");
+      res.status(500).json({success, error: `Internal server error\n ${err}`});
     }
   }
 );
 
 // Route 3: Update an existing note using PUT "/api/notes/updatenote". Login Required
 router.put("/updatenote/:id", fetchuser, async (req, res) => {
+  let success = false;
   try {
     const { title, description, tag } = req.body;
-    const newNote = {};
+    let newNote = {};
     if (title) {
-      newNote.title = encrypt(title);
+      newNote.title = title;
     }
     if (description) {
-      newNote.description = encrypt(description);
+      newNote.description = description;
     }
     if (tag) {
-      newNote.tag = encrypt(tag);
+      newNote.tag = tag;
     }
 
     // Find the note to be updated and update it
     let note = await Note.findById(req.params.id);
     if (!note) {
-      res.status(404).send("Not Found.");
+      res.status(404).json({success, error: "Not Found"});
     }
     if (note.user.toString() !== req.user.id) {
-      return res.status(401).send({ Error: "Not Allowed." });
+      return res.status(401).send({ success, error: "Not Allowed" });
     }
     updatedNote = await Note.findByIdAndUpdate(
       req.params.id,
       { $set: newNote },
       { new: true }
     );
-    decryptTitle = decrypt(updatedNote.title);
-    decryptDescription = decrypt(updatedNote.description);
-    decryptTag = decrypt(updatedNote.tag);
-    let user = updatedNote.user;
-    let _id = updatedNote._id;
-    let date = updatedNote.date;
-    let __v = updatedNote.date;
-    let decryptedNote = {
-      user: user,
-      tag: decryptTag,
-      title: decryptTitle,
-      description: decryptDescription,
-      _id,
-      date,
-      __v,
-    };
-    res.json({ note: decryptedNote });
+    success = true;
+    res.json({ success, note: updatedNote });
   } catch (err) {
     console.log(err);
-    res.status(500).send("Internal server error.");
+    res.status(500).json({ success, error: `Internal server error\n ${err}` });
   }
 });
 
@@ -146,12 +96,12 @@ router.delete("/deletenote/:id", fetchuser, async (req, res) => {
     let success = false;
     let note = await Note.findById(req.params.id);
     if (!note) {
-      res.status(404).send("Not Found.");
+      res.status(404).json({success, error: "Not Found"});
     }
 
     // Allow deletion only if user owns this note
     if (note.user.toString() !== req.user.id) {
-      return res.status(401).send({ Error: "Not Allowed." });
+      return res.status(401).send({ success, error: "Not Allowed" });
     }
     note = await Note.findByIdAndDelete(req.params.id);
     success = true;
@@ -159,14 +109,8 @@ router.delete("/deletenote/:id", fetchuser, async (req, res) => {
   } catch (err) {
     success = false;
     console.log(err);
-    res.status(500).send("Internal server error.");
+    res.status(500).json({ success, error: `Internal server error\n ${err}` });
   }
 });
-
-
-router.get("/test", async (req, res) => {
-  let text = encrypt("Hello this is me shivam");
-  res.json({text, key});
-})
 
 module.exports = router;

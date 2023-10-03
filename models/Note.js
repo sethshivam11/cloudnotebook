@@ -6,16 +6,16 @@ const NoteSchema = new Schema({
     ref: "user",
   },
   tag: {
-    type: Object,
+    type: String,
     default: "General",
     required: true
   },
   title: {
-    type: Object,
+    type: String,
     required: true,
   },
   description: {
-    type: Object,
+    type: String,
     required: true,
   },
   date: {
