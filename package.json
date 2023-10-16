@@ -18,6 +18,7 @@
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.3"
   },
+  "repository":"https://github.com/blaisepascal287/cloudnotebook",
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
