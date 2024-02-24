@@ -4,7 +4,7 @@
 
 ## To clone the project
 
-`git clone https://github.com/sethshivam11/cloudnotebook`
+`git clone https://github.com/sethshivam11/cloudnotebook.git`
 
 `cd cloudnotebook`
 
