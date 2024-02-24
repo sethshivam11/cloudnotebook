@@ -1,0 +1,43 @@
+html{
+    scroll-behavior: smooth;
+}
+::-webkit-scrollbar{
+    width: 0;
+}
+#noteCard {
+    width: 37vw;
+}
+#gridContainer {
+    grid-template-columns: repeat(2, auto);
+    grid-gap: 1rem;
+}
+@media only screen and (max-width: 576px) {
+    #noteCard{
+        width: 81vw;
+    }
+    #gridContainer {
+        grid-template-columns: repeat(1, auto);
+    }
+}
+@media only screen and (min-width: 577px) and (max-width: 700px) {
+    #noteCard{
+        width: 70vw;
+    }
+    #gridContainer {
+        grid-template-columns: repeat(1, auto);
+    }
+}
+@media only screen and (min-width: 701px) and (max-width: 767px) {
+    #noteCard{
+        width: 62vw;
+    }
+    #gridContainer {
+        grid-template-columns: repeat(1, auto);
+    }
+}
+@media screen and (max-width: 991px) {
+    #logOutBtn {
+        display: block;
+        margin: 0 auto;
+    }
+}
